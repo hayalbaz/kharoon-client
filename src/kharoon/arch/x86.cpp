@@ -52,15 +52,7 @@ void kharoon_dump_registers(int fd, unw_cursor_t *cursor, unw_context_t *uc)
     unw_word_t reg;
     for (int i = UNW_X86_64_RAX; i <= UNW_X86_64_RIP; ++i) {
         UNW_CALL(unw_get_reg(cursor, static_cast<x86_64_regnum_t>(i), &reg));
-
-        context::get()->writeTo(fd, &ip, sizeof(ip));
-        context::get()->writeTo(fd, ", sp = ");
-        context::get()->writeTo(fd, &sp, sizeof(sp));
-        context::get()->writeTo(fd,  ", ofs = ");
-        context::get()->writeTo(fd, &ofs, sizeof(ofs));
-        context::get()->writeTo(fd, KHAROON_ESCAPE);
-        context::get()->writeTo(fd, "stack frame : ");
-        context::get()->writeTo(fd, uc.uc_stack.ss_sp, uc.uc_stack.ss_size);
+        context::get()->writeTo(fd, &reg, sizeof(reg));
         context::get()->writeTo(fd, KHAROON_ESCAPE);
     }
 }
