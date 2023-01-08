@@ -20,8 +20,40 @@ int kharoon_client_init_end()
 
 void kharoon_add_object_to_dump(const char* obj)
 {
-    if (!init_in_progress) {
-        return;
-    }
     context::get()->add_new_object(obj);
+}
+
+int kharoon_add_metadata_to_dump(const char *key, const void *metadata, size_t sz)
+{
+    return context::get()->add_metadata(key, metadata, sz) ? 0 : 1;
+}
+
+void kharoon_set_restart_after_crash()
+{
+    context::get()->set_restart_on_crash(true);
+}
+
+void kharoon_reset_restart_after_crash()
+{
+    context::get()->set_restart_on_crash(false);
+}
+
+void kharoon_set_dump_system_environment()
+{
+    context::get()->set_dump_system_environment(true);
+}
+
+void kharoon_reset_dump_system_environment()
+{
+    context::get()->set_dump_system_environment(false);
+}
+
+void kharoon_set_dump_hardware_information()
+{
+    context::get()->set_dump_hardware_information(true);
+}
+
+void kharoon_reset_dump_hardware_information()
+{
+    context::get()->set_dump_hardware_information(false);
 }

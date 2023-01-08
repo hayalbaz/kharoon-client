@@ -1,6 +1,7 @@
 #ifndef KHAROON_CLIENT_INCLUDED
 #define KHAROON_CLIENT_INCLUDED
 
+#include <cstddef>
 #if defined(_MSC_VER)
     #define KHAROON_EXPORT __declspec(dllexport)
     #define KHAROON_IMPORT __declspec(dllimport)
@@ -48,10 +49,11 @@ KHAROON_EXPORT void kharoon_add_object_to_dump(const char *obj_path);
 /**
  * @brief kharoon_add_metadata_to_dump adds metadata to be included in the final dump. It works as a key-value store,
  * which can be recovered later from the dump.
- * @param key that will be used to retrieve the metada.
+ * @param key that will be used to retrieve the metada, cannot contain ','.
  * @param metadata the metadata that will be saved.
+ * @return 0 if successfull, non-zero if key contains ',' or init_start is not called.
  */
-KHAROON_EXPORT void kharoon_add_metadata_to_dump(const char *key, const void *metadata);
+KHAROON_EXPORT int kharoon_add_metadata_to_dump(const char *key, const void *metadata, size_t sz);
 /**
  * @brief kharoon_set_restart_after_crash when a crash happens and kharoon creates a dump, it will restart the caller
  * program again.

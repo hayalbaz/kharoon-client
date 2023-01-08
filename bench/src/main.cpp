@@ -70,6 +70,12 @@ void KHAROON_NOINLINE testc()
 int main()
 {
     kharoon_client_init_start();
+    kharoon_add_object_to_dump("/path/to/object");
+    std::string metadata("value");
+    kharoon_add_metadata_to_dump("key", metadata.c_str(), metadata.size());
+    kharoon_set_dump_hardware_information();
+    kharoon_set_dump_system_environment();
+    kharoon_set_restart_after_crash();
     kharoon_client_init_end();
     testc();
     return 0;
