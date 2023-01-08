@@ -12,3 +12,4 @@ add_executable(kharoon-bench src/main.cpp)
 
 target_include_directories(kharoon-bench PRIVATE ${KHAROON_INCLUDE})
 target_link_libraries(kharoon-bench PRIVATE ${KHAROON_LIB})
+target_compile_options(kharoon-bench PRIVATE "-fno-inline-small-functions")

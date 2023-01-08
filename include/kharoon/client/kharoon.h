@@ -1,6 +1,7 @@
 #ifndef KHAROON_CLIENT_INCLUDED
 #define KHAROON_CLIENT_INCLUDED
 
+#include <cstddef>
 #if defined(_MSC_VER)
     #define KHAROON_EXPORT __declspec(dllexport)
     #define KHAROON_IMPORT __declspec(dllimport)
@@ -15,19 +16,28 @@
 #endif
 
 /**
- * @brief kharoon_client_init initializes kharoon, you need to call this before calling any other function
- * @param dump_dir path that will be used to create the dump file. If folders do not exist, they will be created.
+ * @brief kharoon_client_init starts the initialization of kharoon, you need to call this before calling any other
+ * function. Between this and kharoon_client_init_end() function call no signals will be cought. Similarly, outside
+ * of this interval, calls to any kharoon_* functions will be ignored.
  * @return 0 on success, any other number indicates error.
+ * .
+ * @see kharoon_client_init_end
  */
-KHAROON_EXPORT int kharoon_client_init(const char *dump_dir);
+KHAROON_EXPORT int kharoon_client_init_start();
 /**
- * @brief kharoon_client_dump_unwind_stdout dumps the current stack trace to stdout.
+ * @brief kharoon_client_init completes the initialization of kharoon, you need to call this to enable handling crashes.
+ * @return 0 on success, any other number indicates error.
+ * @see kharoon_client_init_start
  */
-KHAROON_EXPORT void kharoon_client_dump_unwind_stdout();
+KHAROON_EXPORT int kharoon_client_init_end();
 /**
- * @brief kharoon_client_dump_unwind_stdout dumps the currently loaded shared libraries to stdout.
+ * @brief kharoon_set_dump_path sets the path that will be used to save the cump files. If it is not called, it will
+ * dump to the default dump directory set by the kharoon-server.
+ * @param dump_dir path that will be used to create the dump file. If folders do not exist, they will be created.
+ * @pre it is assumed that dump_dir is a file path. kharoon-server will ignore the request to save dump if it not a
+ * path
  */
-KHAROON_EXPORT void kharoon_client_dump_shared_libraries_stdout();
+KHAROON_EXPORT void kharoon_set_dump_path(const char *dump_dir);
 /**
  * @brief kharoon_add_object_to_dump adds a path to an object to be included in the final dump. Given object will be
  * bundled with the dump file.
@@ -39,10 +49,11 @@ KHAROON_EXPORT void kharoon_add_object_to_dump(const char *obj_path);
 /**
  * @brief kharoon_add_metadata_to_dump adds metadata to be included in the final dump. It works as a key-value store,
  * which can be recovered later from the dump.
- * @param key that will be used to retrieve the metada.
+ * @param key that will be used to retrieve the metada, cannot contain ','.
  * @param metadata the metadata that will be saved.
+ * @return 0 if successfull, non-zero if key contains ',' or init_start is not called.
  */
-KHAROON_EXPORT void kharoon_add_metadata_to_dump(const char *key, const void *metadata);
+KHAROON_EXPORT int kharoon_add_metadata_to_dump(const char *key, const void *metadata, size_t sz);
 /**
  * @brief kharoon_set_restart_after_crash when a crash happens and kharoon creates a dump, it will restart the caller
  * program again.
@@ -64,7 +75,7 @@ KHAROON_EXPORT void kharoon_set_dump_system_environment();
 KHAROON_EXPORT void kharoon_reset_dump_system_environment();
 /**
  * @brief kharoon_set_dump_peripherals includes information about hardware the software is running on. This information
- * includes: CPU, GPU, GPU Driver, RAM, connected USB devices, displays.
+ * includes: CPU, GPU, GPU driver name and version, RAM, connected USB devices, displays.
  */
 KHAROON_EXPORT void kharoon_set_dump_hardware_information();
 /**

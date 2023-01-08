@@ -22,11 +22,19 @@
     #define UNW_CALL(fn) fn
 #endif
 
+#if defined(_MSC_VER)
+    static const char *KHAROON_ESCAPE = "\r\n";
+#elif defined(__GNUC__)
+    static const char *KHAROON_ESCAPE = "\n";
+#else
+    static const char *KHAROON_ESCAPE = "\n";
+#endif
+
 namespace kharoon
 {
 namespace util
 {
-    void print_unwind_error(int ec, const char* fname, int line)
+    static void print_unwind_error(int ec, const char* fname, int line)
     {
         context::get()->writeTo(2, "libunwind error: ");
         context::get()->writeTo(2, unw_strerror(ec));
