@@ -12,11 +12,10 @@ add_subdirectory(bench)
 add_library(kharoonclient SHARED
     src/kharoon.cpp
     include/kharoon/client/kharoon.h
-    src/kharoon/handler.h
-    src/kharoon/handler.cpp
     src/kharoon/utils.h
     src/kharoon/context.h
     src/kharoon/context.cpp
+    src/kharoon/arch/x86.cpp
 )
 
 target_include_directories(kharoonclient PUBLIC include/)

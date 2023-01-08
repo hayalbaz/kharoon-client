@@ -1,54 +1,76 @@
 #include <iostream>
 #include <kharoon/client/kharoon.h>
 
-void crash_unhandled_exception()
+#if defined(_MSC_VER)
+    #define KHAROON_EXPORT __declspec(noinline)
+#elif defined(__GNUC__)
+    #define KHAROON_NOINLINE __attribute__((noinline))
+#else
+    //  do nothing and hope for the best?
+    #define KHAROON_EXPORT
+    #pragma warning Unknown noinline semantics.
+#endif
+
+#define KHAROON_PREVENT_INLINE asm (""); static int var = 0;
+
+void KHAROON_NOINLINE crash_unhandled_exception()
 {
+    KHAROON_PREVENT_INLINE;
     throw std::runtime_error("test");
 }
 
-void crash_nullptr_deref()
+void KHAROON_NOINLINE crash_nullptr_deref()
 {
+    KHAROON_PREVENT_INLINE;
     int *i = nullptr;
     std::cout << *i;
 }
 
-void crash_abort()
+void KHAROON_NOINLINE crash_abort()
 {
+    KHAROON_PREVENT_INLINE;
     std::abort();
 }
 
-void crash_arithmatic_error()
+void KHAROON_NOINLINE crash_arithmatic_error()
 {
+    KHAROON_PREVENT_INLINE;
     int i = 1/0;
     std::cout << i;
 }
 
-void testa()
+void KHAROON_NOINLINE testa(int input)
 {
+    KHAROON_PREVENT_INLINE;
     std::cout << "a" << std::endl;
 
-    kharoon_client_dump_unwind_stdout();
-    //crash_nullptr_deref();
+    //BUG: in release mode uncommenting this causes test functions to get inlined, and only shows main function at the
+    //top of the callstack.
+    //kharoon_client_dump_unwind_stdout();
+    crash_nullptr_deref();
     //crash_abort();
     //crash_arithmatic_error();
     //crash_unhandled_exception();
 }
 
-void testb()
+void KHAROON_NOINLINE testb()
 {
+    KHAROON_PREVENT_INLINE;
     std::cout << "b" << std::endl;
-    testa();
+    testa(3);
 }
 
-void testc()
+void KHAROON_NOINLINE testc()
 {
+    KHAROON_PREVENT_INLINE;
     std::cout << "c" << std::endl;
     testb();
 }
 
 int main()
 {
-    kharoon_client_init();
+    kharoon_client_init_start();
+    kharoon_client_init_end();
     testc();
     return 0;
 }
