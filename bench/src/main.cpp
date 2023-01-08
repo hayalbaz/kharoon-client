@@ -57,6 +57,7 @@ void KHAROON_NOINLINE testb()
 {
     KHAROON_PREVENT_INLINE;
     std::cout << "b" << std::endl;
+    char test[5] = "test";
     testa(3);
 }
 
