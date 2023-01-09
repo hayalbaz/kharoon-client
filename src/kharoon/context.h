@@ -27,6 +27,7 @@ namespace kharoon
         void set_dump_system_environment(bool dump_system_environment);
         void set_dump_hardware_information(bool dump_hardware_information);
         void set_restart_on_crash(bool restart_on_crash);
+        int add_command_line_argument(std::string_view arg);
 
     public:
         static constexpr std::size_t PROC_NAME_LENGTH = 100;
@@ -56,6 +57,9 @@ namespace kharoon
         int dump_fd;
         // Path to the pid file of this executable
         std::string pid_file;
+        // Path to the self executable
+        std::string executable_path;
+        std::vector<char*> argv;
         // Flags
         bool dump_system_environment;
         bool dump_hardware_information;

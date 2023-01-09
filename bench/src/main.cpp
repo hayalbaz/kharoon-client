@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 #include <kharoon/client/kharoon.h>
 
@@ -22,6 +23,7 @@ void KHAROON_NOINLINE crash_unhandled_exception()
 void KHAROON_NOINLINE crash_nullptr_deref()
 {
     KHAROON_PREVENT_INLINE;
+    int *leak = new int[1000000]; // leak about 4MB each time to check if restarting the process carries the leaks
     int *i = nullptr;
     std::cout << *i;
 }
@@ -68,7 +70,7 @@ void KHAROON_NOINLINE testc()
     testb();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     kharoon_client_init_start();
     kharoon_add_object_to_dump("/path/to/object");
@@ -77,7 +79,14 @@ int main()
     kharoon_set_dump_hardware_information();
     kharoon_set_dump_system_environment();
     kharoon_set_restart_after_crash();
+    kharoon_add_command_line_argument("--restarted");
     kharoon_client_init_end();
-    testc();
+    if (argc > 1 && strcmp(argv[1], "--restarted")) {
+        std::cout << "Process restarted" << std::endl;
+    }
+    else {
+        testc();
+    }
+
     return 0;
 }

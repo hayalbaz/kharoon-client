@@ -57,3 +57,8 @@ void kharoon_reset_dump_hardware_information()
 {
     context::get()->set_dump_hardware_information(false);
 }
+
+int kharoon_add_command_line_argument(const char *arg)
+{
+    return context::get()->add_command_line_argument(arg);
+}
