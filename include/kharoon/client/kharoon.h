@@ -20,7 +20,6 @@
  * function. Between this and kharoon_client_init_end() function call no signals will be cought. Similarly, outside
  * of this interval, calls to any kharoon_* functions will be ignored.
  * @return 0 on success, any other number indicates error.
- * .
  * @see kharoon_client_init_end
  */
 KHAROON_EXPORT int kharoon_client_init_start();
@@ -83,5 +82,15 @@ KHAROON_EXPORT void kharoon_set_dump_hardware_information();
  * on, it is the default setting.
  */
 KHAROON_EXPORT void kharoon_reset_dump_hardware_information();
+/**
+ * @brief kharoon_add_command_line_argument adds an argument to the argv vector that will be passed to the restarting
+ * process, if restarting after crash is enabled. The input will be copied to an internal buffer.
+ * @param arg argument that will be passed to the restarting process.
+ * @return 0 if succesfull, non-zero if restarting is not enabled.
+ * @see kharoon_set_restart_after_crash
+ * @note the argument vector is not kept across changing the ability to restart. If you set up your arguments but
+ * disable them at some point, you will have to add them again for them to be passed to restarting process.
+ */
+KHAROON_EXPORT int kharoon_add_command_line_argument(const char *arg);
 
 #endif

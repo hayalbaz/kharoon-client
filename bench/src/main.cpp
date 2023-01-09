@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 #include <kharoon/client/kharoon.h>
 
@@ -68,7 +69,7 @@ void KHAROON_NOINLINE testc()
     testb();
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     kharoon_client_init_start();
     kharoon_add_object_to_dump("/path/to/object");
@@ -77,7 +78,14 @@ int main()
     kharoon_set_dump_hardware_information();
     kharoon_set_dump_system_environment();
     kharoon_set_restart_after_crash();
+    kharoon_add_command_line_argument("--restarted");
     kharoon_client_init_end();
-    testc();
+    if (argc > 1 && strcmp(argv[1], "--restarted")) {
+        std::cout << "Process restarted" << std::endl;
+    }
+    else {
+        testc();
+    }
+
     return 0;
 }

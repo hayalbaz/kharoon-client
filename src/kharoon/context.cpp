@@ -272,4 +272,14 @@ namespace kharoon
     #pragma warning Unknown platform, will not be able to restart on crash.
 #endif
     }
+
+    int context::add_command_line_argument(std::string_view arg)
+    {
+        if (!restart_on_crash) {
+            return -1;
+        }
+        char *arg_ptr = new char[arg.size()];
+        argv.push_back(arg_ptr);
+        return 0;
+    }
 }
