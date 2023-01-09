@@ -37,6 +37,7 @@ namespace kharoon
         context();
         void initialize_signal_handlers(void (*handler)(int));
         void dump_unwind();
+        void dump_stack_frame(const char *start, const char *end);
         void dump_shared_libraries();
         void dump_objects();
         void dump_metadata();

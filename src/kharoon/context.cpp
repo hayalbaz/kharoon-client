@@ -5,7 +5,7 @@
 #include "utils.h"
 #include <fcntl.h>
 #include <algorithm>
-
+#include <cassert>
 volatile sig_atomic_t fatal_error_in_progress = 0;
 volatile sig_atomic_t init_in_progress = 0;
 
@@ -127,7 +127,8 @@ namespace kharoon
             UNW_CALL(unw_init_local(&cursor, &uc));
         }
 
-        while (unw_step(&cursor) > 0) {
+        auto res = unw_step(&cursor);
+        while (res > 0) {
             std::memset(proc_name.data(), 0, PROC_NAME_LENGTH);
             UNW_CALL(unw_get_proc_name(&cursor, proc_name.data(), PROC_NAME_LENGTH, &ofs));
             writeTo(dump_fd, "[");
@@ -137,8 +138,27 @@ namespace kharoon
             writeTo(dump_fd, "] : ");
             writeTo(dump_fd, KHAROON_ESCAPE);
             kharoon_dump_registers(dump_fd, &cursor, &uc);
+
+            unw_word_t current_sp;
+            unw_word_t next_sp;
+            UNW_CALL(unw_get_reg(&cursor, UNW_REG_SP, &current_sp));
+            res = unw_step(&cursor);
+            if (res > 0) {
+                UNW_CALL(unw_get_reg(&cursor, UNW_REG_SP, &next_sp));
+                dump_stack_frame(reinterpret_cast<const char*>(current_sp), reinterpret_cast<const char*>(next_sp));
+            }
         }
         writeTo(dump_fd, "<<</backtrace>>>");
+        writeTo(dump_fd, KHAROON_ESCAPE);
+    }
+
+    void context::dump_stack_frame(const char *start, const char *end)
+    {
+        assert(end > start);
+        auto len = end - start;
+
+        writeTo(dump_fd, "stack frame : ");
+        writeTo(dump_fd, start, len);
         writeTo(dump_fd, KHAROON_ESCAPE);
     }
 
