@@ -40,6 +40,10 @@ namespace kharoon
 
     void context::setup_crash_handler()
     {
+        // last argument of the argv must be NULL for it to work
+        if (argv.back() != NULL) {
+            argv.push_back(NULL);
+        }
         initialize_signal_handlers(&context::handler);
     }
 
@@ -106,6 +110,15 @@ namespace kharoon
         get()->dump_objects();
         get()->dump_metadata();
         get()->dump_flags();
+        if (get()->restart_on_crash && !get()->executable_path.empty()) {
+            // We need to unblock signals before restarting so that they still work after
+            // If not unblocked it will cause the restarted application to not receive the same signal after another
+            // crash.
+            sigset_t sigs;
+            sigfillset(&sigs);
+            sigprocmask(SIG_UNBLOCK, &sigs, NULL);
+            execv(get()->executable_path.c_str(), get()->argv.data());
+        }
         signal(signum, SIG_DFL);
         raise(signum);
     }
@@ -238,6 +251,25 @@ namespace kharoon
         if (!init_in_progress) {
             return;
         }
+
         this->restart_on_crash = restart_on_crash;
+
+#if defined(_MSC_VER)
+    #pragma warning Restarting executable on crash is not implemented on Windows yet.
+#elif defined(__GNUC__)
+        executable_path = restart_on_crash ? "/proc/" + std::to_string(getpid()) + "/exe" : "";
+
+        for (const auto *arg : argv) {
+            delete arg;
+        }
+        argv.clear();
+
+        if (!executable_path.empty()) {
+            char *arg_zero = new char[executable_path.size()];
+            argv.push_back(arg_zero);
+        }
+#else
+    #pragma warning Unknown platform, will not be able to restart on crash.
+#endif
     }
 }

@@ -22,6 +22,7 @@ void KHAROON_NOINLINE crash_unhandled_exception()
 void KHAROON_NOINLINE crash_nullptr_deref()
 {
     KHAROON_PREVENT_INLINE;
+    int *leak = new int[1000000]; // leak about 4MB each time to check if restarting the process carries the leaks
     int *i = nullptr;
     std::cout << *i;
 }

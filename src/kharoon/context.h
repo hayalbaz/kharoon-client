@@ -55,6 +55,9 @@ namespace kharoon
         int dump_fd;
         // Path to the pid file of this executable
         std::string pid_file;
+        // Path to the self executable
+        std::string executable_path;
+        std::vector<char*> argv;
         // Flags
         bool dump_system_environment;
         bool dump_hardware_information;
