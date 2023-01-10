@@ -8,6 +8,7 @@
 #include <cassert>
 #include <sys/utsname.h>
 #include <sys/times.h>
+#include <sys/stat.h>
 
 volatile sig_atomic_t fatal_error_in_progress = 0;
 volatile sig_atomic_t init_in_progress = 0;
@@ -324,6 +325,15 @@ namespace kharoon
         dump("pid,");
         dumpLn(buf);
 
+
+#if defined(_MSC_VER)
+    #pragma warning Getting temperature info on Windows is not implemented yet.
+#elif defined(__GNUC__)
+
+#else
+    #pragma warning Unknown platform, will not be able to dump temperature info.
+#endif
+
         dumpLn("<<</system_information>>>");
     }
 
@@ -354,17 +364,7 @@ namespace kharoon
 #if defined(_MSC_VER)
     #pragma warning Restarting executable on crash is not implemented on Windows yet.
 #elif defined(__GNUC__)
-        executable_path = restart_on_crash ? "/proc/" + std::to_string(getpid()) + "/exe" : "";
-
-        for (const auto *arg : argv) {
-            delete arg;
-        }
-        argv.clear();
-
-        if (!executable_path.empty()) {
-            char *arg_zero = new char[executable_path.size()];
-            argv.push_back(arg_zero);
-        }
+    //TODO: read /sys/class/thermal folder and dump thermal zone information
 #else
     #pragma warning Unknown platform, will not be able to restart on crash.
 #endif
