@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <sys/utsname.h>
+#include <sys/times.h>
 
 volatile sig_atomic_t fatal_error_in_progress = 0;
 volatile sig_atomic_t init_in_progress = 0;
@@ -274,8 +275,17 @@ namespace kharoon
         if (uname(&system_info) != 0) {
             return;
         }
-
         dumpLn("<<<system_information>>>");
+
+        auto current_time = time(NULL);
+        if (current_time == ((time_t) - 1)) {
+            current_time = 1;
+        }
+
+        char buf[100];
+        util::number_to_str_base_10(buf, current_time);
+        dump("current_time_seconds,");
+        dumpLn(buf);
 
         dump("sysname,");
         dumpLn(system_info.sysname);
@@ -296,6 +306,23 @@ namespace kharoon
         dump("domainname,");
         dumpLn(system_info.domainname);
 #endif
+
+        tms t;
+        if (times(&t) == -1) {
+            return;
+        }
+
+        util::number_to_str_base_10(buf, t.tms_utime);
+        dump("instruction_time_seconds,");
+        dumpLn(buf);
+        util::number_to_str_base_10(buf, t.tms_stime);
+        dump("kernel_time_seconds,");
+        dumpLn(buf);
+
+        auto pid = getpid();
+        util::number_to_str_base_10(buf, pid);
+        dump("pid,");
+        dumpLn(buf);
 
         dumpLn("<<</system_information>>>");
     }

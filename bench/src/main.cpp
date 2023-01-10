@@ -1,6 +1,8 @@
 #include <cstring>
 #include <iostream>
 #include <kharoon/client/kharoon.h>
+#include <thread>
+using namespace std::chrono_literals;
 
 #if defined(_MSC_VER)
     #define KHAROON_EXPORT __declspec(noinline)
@@ -67,6 +69,11 @@ void KHAROON_NOINLINE testc()
 {
     KHAROON_PREVENT_INLINE;
     std::cout << "c" << std::endl;
+    for (int i = 0; i < 5000; ++i) {
+        std::this_thread::sleep_for(500us);
+        std::cout << "stuff";
+        std::this_thread::sleep_for(500us);
+    }
     testb();
 }
 
