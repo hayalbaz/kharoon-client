@@ -1,5 +1,5 @@
-#ifndef CONTEXT_H
-#define CONTEXT_H
+#ifndef KHAROON_CONTEXT_H
+#define KHAROON_CONTEXT_H
 
 #include <vector>
 #include <string>
@@ -13,7 +13,10 @@ extern volatile sig_atomic_t init_in_progress;
 
 namespace kharoon
 {
-    // Used to hold all relevant information to be used in an event of dump
+    class compatibility;
+    /**
+     * @brief The context class business logic of the library is implemented by this class.
+     */
     class context
     {
     public:
@@ -63,19 +66,19 @@ namespace kharoon
         std::vector<int> signals;
         // File descriptor to write dump data
         int dump_fd;
-        // Path to the pid file of this executable
-        std::string pid_file;
         // Path to the self executable
         std::string executable_path;
+        // Argument vector that will be passed to the restarted executable
         std::vector<char*> argv;
         // Flags
         bool dump_system_environment;
         bool dump_hardware_information;
         bool restart_on_crash;
+        compatibility *compatibility_layer;
     };
 
 
 }
 
 
-#endif // CONTEXT_H
+#endif // KHAROON_CONTEXT_H

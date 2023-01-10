@@ -7,8 +7,10 @@
 #include <algorithm>
 #include <cassert>
 #include <sys/utsname.h>
+#include <time.h>
 #include <sys/times.h>
 #include <sys/stat.h>
+#include "os/compatibility.h"
 
 volatile sig_atomic_t fatal_error_in_progress = 0;
 volatile sig_atomic_t init_in_progress = 0;
@@ -28,13 +30,7 @@ namespace kharoon
         : proc_name(std::string(PROC_NAME_LENGTH, '\0')),
           signals({SIGSEGV, SIGILL, SIGFPE, SIGABRT})
     {
-#if defined(_MSC_VER)
-    #pragma warning Shared library dumping not implemented for Windows yet.
-#elif defined(__GNUC__)
-        pid_file = "/proc/" + std::to_string(getpid()) + "/maps";
-#else
-    #pragma warning Unknown shared library semantics, will not dump shared library information.
-#endif
+        compatibility_layer = get_compatibility_layer();
     }
 
     void context::disable_crash_handler()
@@ -180,8 +176,8 @@ namespace kharoon
         while (res > 0) {
             std::memset(proc_name.data(), 0, PROC_NAME_LENGTH);
             UNW_CALL(unw_get_proc_name(&cursor, proc_name.data(), PROC_NAME_LENGTH, &ofs));
-            dump( "[");
-            dump( proc_name.data());
+            dump("[");
+            dump(proc_name.data());
             dump(":offset=");
             dump(&ofs, sizeof(ofs));
             dumpLn("] : ");
@@ -211,26 +207,15 @@ namespace kharoon
     void context::dump_shared_libraries()
     {
         dumpLn("<<<shared_libraries>>>");
-#if defined(_MSC_VER)
-    #pragma warning Shared library dumping not implemented for Windows yet.
-#elif defined(__GNUC__)
-        auto fd = open(pid_file.c_str(), O_RDONLY);
-        if (fd < 0) {
-            return;
-        }
-
         constexpr std::size_t SZ = 128;
         char buf[SZ];
         ssize_t read_bytes = 0;
 
         do {
             std::memset(buf, 0, SZ);
-            read_bytes = read(fd, buf, SZ);
+            read_bytes = compatibility_layer->dump_shared_libraries(buf, SZ);
             dump(buf, read_bytes);
         } while (read_bytes != 0);
-#else
-    #pragma warning Unknown shared library semantics, will not dump shared library information.
-#endif
         dumpLn("<<</shared_libraries>>>");
     }
 
@@ -283,7 +268,8 @@ namespace kharoon
             current_time = 1;
         }
 
-        char buf[100];
+        constexpr std::size_t SZ = 128;
+        char buf[SZ];
         util::number_to_str_base_10(buf, current_time);
         dump("current_time_seconds,");
         dumpLn(buf);
@@ -325,14 +311,13 @@ namespace kharoon
         dump("pid,");
         dumpLn(buf);
 
+        ssize_t read_bytes = 0;
 
-#if defined(_MSC_VER)
-    #pragma warning Getting temperature info on Windows is not implemented yet.
-#elif defined(__GNUC__)
-
-#else
-    #pragma warning Unknown platform, will not be able to dump temperature info.
-#endif
+        do {
+            std::memset(buf, 0, SZ);
+            read_bytes = compatibility_layer->dump_hardware_information(buf, SZ);
+            dump(buf, read_bytes);
+        } while (read_bytes != 0);
 
         dumpLn("<<</system_information>>>");
     }
@@ -361,13 +346,17 @@ namespace kharoon
 
         this->restart_on_crash = restart_on_crash;
 
-#if defined(_MSC_VER)
-    #pragma warning Restarting executable on crash is not implemented on Windows yet.
-#elif defined(__GNUC__)
-    //TODO: read /sys/class/thermal folder and dump thermal zone information
-#else
-    #pragma warning Unknown platform, will not be able to restart on crash.
-#endif
+        executable_path = restart_on_crash ? compatibility_layer->get_executable_path() : "";
+
+        for (const auto *arg : argv) {
+            delete arg;
+        }
+        argv.clear();
+
+        if (!executable_path.empty()) {
+            char *arg_zero = new char[executable_path.size()];
+            argv.push_back(arg_zero);
+        }
     }
 
     int context::add_command_line_argument(std::string_view arg)

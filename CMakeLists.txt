@@ -10,12 +10,19 @@ set(LIBUNWIND_LIBS "unwind")
 
 add_subdirectory(bench)
 add_library(kharoonclient SHARED
-    src/kharoon.cpp
+    #TODO: need some sort of flag to choose between different architectures and operating systems.
+    src/kharoon/arch/x86.cpp
+
     include/kharoon/client/kharoon.h
+    src/kharoon.cpp
     src/kharoon/utils.h
+    src/kharoon/utils.cpp
     src/kharoon/context.h
     src/kharoon/context.cpp
-    src/kharoon/arch/x86.cpp
+    src/kharoon/os/compatibility.h
+    src/kharoon/os/compatibility.cpp
+    src/kharoon/os/linux_os.h
+    src/kharoon/os/linux_os.cpp
 )
 
 target_include_directories(kharoonclient PUBLIC include/)
