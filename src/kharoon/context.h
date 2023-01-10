@@ -20,14 +20,17 @@ namespace kharoon
         static context *get();
         void add_new_object(std::string_view objectPath);
         bool add_metadata(std::string_view key, const void *metadata, std::size_t sz);
-        void writeTo(int fd, const char *str) const;
-        void writeTo(int fd, const void *buf, std::size_t len) const;
         void disable_crash_handler();
         void setup_crash_handler();
         void set_dump_system_environment(bool dump_system_environment);
         void set_dump_hardware_information(bool dump_hardware_information);
         void set_restart_on_crash(bool restart_on_crash);
         int add_command_line_argument(std::string_view arg);
+
+        void writeTo(int fd, const char *str) const;
+        void writeTo(int fd, const void *buf, std::size_t len) const;
+        void writeLn(int fd, const char *str) const;
+        void writeLn(int fd, const void *buf, std::size_t len) const;
 
     public:
         static constexpr std::size_t PROC_NAME_LENGTH = 100;
@@ -43,6 +46,11 @@ namespace kharoon
         void dump_objects();
         void dump_metadata();
         void dump_flags();
+        void dump_system_information();
+        void dump(const char *str) const;
+        void dump(const void *buf, std::size_t len) const;
+        void dumpLn(const char *str) const;
+        void dumpLn(const void *buf, std::size_t len) const;
 
     private:
         // Used for holding the procedure name during stack unwinding
@@ -65,6 +73,8 @@ namespace kharoon
         bool dump_hardware_information;
         bool restart_on_crash;
     };
+
+
 }
 
 

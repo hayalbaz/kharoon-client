@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <cassert>
+#include <sys/utsname.h>
+
 volatile sig_atomic_t fatal_error_in_progress = 0;
 volatile sig_atomic_t init_in_progress = 0;
 
@@ -88,6 +90,26 @@ namespace kharoon
         return true;
     }
 
+    void context::dump(const char *str) const
+    {
+        writeTo(dump_fd, str);
+    }
+
+    void context::dump(const void *buf, std::size_t len) const
+    {
+        writeTo(dump_fd, buf, len);
+    }
+
+    void context::dumpLn(const char *str) const
+    {
+        writeLn(dump_fd, str);
+    }
+
+    void context::dumpLn(const void *buf, std::size_t len) const
+    {
+        writeLn(dump_fd, buf, len);
+    }
+
     void context::writeTo(int fd, const char *str) const
     {
         writeTo(fd, static_cast<const void*>(str), std::strlen(str));
@@ -98,6 +120,18 @@ namespace kharoon
         write(fd, buf, len);
     }
 
+    void context::writeLn(int fd, const char *str) const
+    {
+        writeTo(dump_fd, str);
+        writeTo(dump_fd, KHAROON_ESCAPE);
+    }
+
+    void context::writeLn(int fd, const void *buf, std::size_t len) const
+    {
+        write(fd, buf, len);
+        writeTo(dump_fd, KHAROON_ESCAPE);
+    }
+
     void context::handler(int signum)
     {
         if (fatal_error_in_progress) {
@@ -105,6 +139,7 @@ namespace kharoon
         }
         fatal_error_in_progress = 1;
 
+        get()->dump_system_information();
         get()->dump_unwind();
         get()->dump_shared_libraries();
         get()->dump_objects();
@@ -125,8 +160,7 @@ namespace kharoon
 
     void context::dump_unwind()
     {
-        writeTo(dump_fd, "<<<backtrace>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        writeLn(dump_fd, "<<<backtrace>>>");
         unw_cursor_t cursor;
         unw_context_t uc;
         unw_word_t ofs;
@@ -144,12 +178,11 @@ namespace kharoon
         while (res > 0) {
             std::memset(proc_name.data(), 0, PROC_NAME_LENGTH);
             UNW_CALL(unw_get_proc_name(&cursor, proc_name.data(), PROC_NAME_LENGTH, &ofs));
-            writeTo(dump_fd, "[");
-            writeTo(dump_fd, proc_name.data());
-            writeTo(dump_fd, ":offset=");
-            writeTo(dump_fd, &ofs, sizeof(ofs));
-            writeTo(dump_fd, "] : ");
-            writeTo(dump_fd, KHAROON_ESCAPE);
+            dump( "[");
+            dump( proc_name.data());
+            dump(":offset=");
+            dump(&ofs, sizeof(ofs));
+            dumpLn("] : ");
             kharoon_dump_registers(dump_fd, &cursor, &uc);
 
             unw_word_t current_sp;
@@ -161,8 +194,7 @@ namespace kharoon
                 dump_stack_frame(reinterpret_cast<const char*>(current_sp), reinterpret_cast<const char*>(next_sp));
             }
         }
-        writeTo(dump_fd, "<<</backtrace>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<</backtrace>>>");
     }
 
     void context::dump_stack_frame(const char *start, const char *end)
@@ -170,15 +202,13 @@ namespace kharoon
         assert(end > start);
         auto len = end - start;
 
-        writeTo(dump_fd, "stack frame : ");
-        writeTo(dump_fd, start, len);
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dump("stack frame : ");
+        dumpLn(start, len);
     }
 
     void context::dump_shared_libraries()
     {
-        writeTo(dump_fd, "<<<shared_libraries>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<<shared_libraries>>>");
 #if defined(_MSC_VER)
     #pragma warning Shared library dumping not implemented for Windows yet.
 #elif defined(__GNUC__)
@@ -194,60 +224,80 @@ namespace kharoon
         do {
             std::memset(buf, 0, SZ);
             read_bytes = read(fd, buf, SZ);
-            writeTo(dump_fd, buf, read_bytes);
+            dump(buf, read_bytes);
         } while (read_bytes != 0);
 #else
     #pragma warning Unknown shared library semantics, will not dump shared library information.
 #endif
-        writeTo(dump_fd, "<<</shared_libraries>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<</shared_libraries>>>");
     }
 
     void context::dump_objects()
     {
-        writeTo(dump_fd, "<<<objects>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<<objects>>>");
         for (const auto &obj : objects) {
-            writeTo(dump_fd, obj.c_str());
-            writeTo(dump_fd, KHAROON_ESCAPE);
+            dumpLn(obj.c_str());
         }
-        writeTo(dump_fd, "<<</objects>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<</objects>>>");
     }
 
     void context::dump_metadata()
     {
-        writeTo(dump_fd, "<<<metadata>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<<metadata>>>");
         for (const auto &[key, val] : metadata_map) {
-            writeTo(dump_fd, key.c_str());
-            writeTo(dump_fd, ",");
-            writeTo(dump_fd, val.data(), val.size());
-            writeTo(dump_fd, KHAROON_ESCAPE);
+            dump(key.c_str());
+            dump(",");
+            dumpLn(val.data(), val.size());
         }
-        writeTo(dump_fd, "<<</metadata>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<</metadata>>>");
     }
 
     void context::dump_flags()
     {
-        writeTo(dump_fd, "<<<flags>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<<flags>>>");
 
-        writeTo(dump_fd, "dump_system_environment,");
-        writeTo(dump_fd, dump_system_environment ? "true" : "false");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dump("dump_system_environment,");
+        dumpLn(dump_system_environment ? "true" : "false");
 
-        writeTo(dump_fd, "dump_hardware_information,");
-        writeTo(dump_fd, dump_hardware_information ? "true" : "false");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dump("dump_hardware_information,");
+        dumpLn(dump_hardware_information ? "true" : "false");
 
-        writeTo(dump_fd, "restart_on_crash,");
-        writeTo(dump_fd, restart_on_crash ? "true" : "false");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dump("restart_on_crash,");
+        dumpLn(restart_on_crash ? "true" : "false");
 
-        writeTo(dump_fd, "<<</flags>>>");
-        writeTo(dump_fd, KHAROON_ESCAPE);
+        dumpLn("<<</flags>>>");
+    }
+
+    void context::dump_system_information()
+    {
+        utsname system_info;
+        if (uname(&system_info) != 0) {
+            return;
+        }
+
+        dumpLn("<<<system_information>>>");
+
+        dump("sysname,");
+        dumpLn(system_info.sysname);
+
+        dump("nodename,");
+        dumpLn(system_info.nodename);
+
+        dump("release,");
+        dumpLn(system_info.release);
+
+        dump("version,");
+        dumpLn(system_info.version);
+
+        dump("machine,");
+        dumpLn(system_info.machine);
+
+#ifdef _GNU_SOURCE
+        dump("domainname,");
+        dumpLn(system_info.domainname);
+#endif
+
+        dumpLn("<<</system_information>>>");
     }
 
     void context::set_dump_system_environment(bool dump_system_environment)
