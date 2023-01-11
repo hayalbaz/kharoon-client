@@ -29,6 +29,7 @@ namespace kharoon
         void set_dump_hardware_information(bool dump_hardware_information);
         void set_restart_on_crash(bool restart_on_crash);
         int add_command_line_argument(std::string_view arg);
+        void set_path_to_server(std::string_view path_to_server);
 
         void writeTo(int fd, const char *str) const;
         void writeTo(int fd, const void *buf, std::size_t len) const;
@@ -68,6 +69,8 @@ namespace kharoon
         int dump_fd;
         // Path to the self executable
         std::string executable_path;
+        // Path to the kharoon-server executable
+        std::string server_path;
         // Argument vector that will be passed to the restarted executable
         std::vector<char*> argv;
         // Flags

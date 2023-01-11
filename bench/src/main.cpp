@@ -79,21 +79,21 @@ void KHAROON_NOINLINE testc()
 
 int main(int argc, char *argv[])
 {
-    kharoon_client_init_start();
+    if (argc < 2) {
+        std::cerr << "You need to give the absolute path to kharoon-server for this to work!" << std::endl;
+        std::abort();
+    }
+    kharoon_client_init_start(argv[1]);
     kharoon_add_object_to_dump("/path/to/object");
     std::string metadata("value");
     kharoon_add_metadata_to_dump("key", metadata.c_str(), metadata.size());
     kharoon_set_dump_hardware_information();
     kharoon_set_dump_system_environment();
     kharoon_set_restart_after_crash();
-    kharoon_add_command_line_argument("--restarted");
+    kharoon_add_command_line_argument("--restarte-me");
     kharoon_client_init_end();
-    if (argc > 1 && strcmp(argv[1], "--restarted")) {
-        std::cout << "Process restarted" << std::endl;
-    }
-    else {
-        testc();
-    }
+
+    testc();
 
     return 0;
 }

@@ -28,7 +28,8 @@ namespace kharoon
 {
     context::context()
         : proc_name(std::string(PROC_NAME_LENGTH, '\0')),
-          signals({SIGSEGV, SIGILL, SIGFPE, SIGABRT})
+          signals({SIGSEGV, SIGILL, SIGFPE, SIGABRT}),
+          dump_fd(0)
     {
         compatibility_layer = get_compatibility_layer();
     }
@@ -137,21 +138,28 @@ namespace kharoon
         }
         fatal_error_in_progress = 1;
 
-        get()->dump_system_information();
-        get()->dump_unwind();
-        get()->dump_shared_libraries();
-        get()->dump_objects();
-        get()->dump_metadata();
-        get()->dump_flags();
-        if (get()->restart_on_crash && !get()->executable_path.empty()) {
-            // We need to unblock signals before restarting so that they still work after
-            // If not unblocked it will cause the restarted application to not receive the same signal after another
-            // crash.
-            sigset_t sigs;
-            sigfillset(&sigs);
-            sigprocmask(SIG_UNBLOCK, &sigs, NULL);
-            execv(get()->executable_path.c_str(), get()->argv.data());
+        int pipe_fd[2];
+        auto res = pipe(pipe_fd);
+        if (res != -1) {
+            auto child_fd = fork();
+            if (child_fd != 0) {
+                get()->dump_fd = pipe_fd[1];
+                close(pipe_fd[0]);
+            }
+            else {
+                close(pipe_fd[0]);
+                std::memcpy(get()->argv[0], &pipe_fd[1], sizeof(int));
+                execv(get()->server_path.c_str(), get()->argv.data());
+            }
+
+            get()->dump_system_information();
+            get()->dump_unwind();
+            get()->dump_shared_libraries();
+            get()->dump_objects();
+            get()->dump_metadata();
+            get()->dump_flags();
         }
+
         signal(signum, SIG_DFL);
         raise(signum);
     }
@@ -346,16 +354,16 @@ namespace kharoon
 
         this->restart_on_crash = restart_on_crash;
 
-        executable_path = restart_on_crash ? compatibility_layer->get_executable_path() : "";
-
         for (const auto *arg : argv) {
             delete arg;
         }
         argv.clear();
 
         if (!executable_path.empty()) {
-            char *arg_zero = new char[executable_path.size()];
-            argv.push_back(arg_zero);
+            char *arg_pipe_fd = new char[sizeof(int)];
+            char *arg_executable_path = new char[executable_path.size()];
+            argv.push_back(arg_pipe_fd);
+            argv.push_back(arg_executable_path);
         }
     }
 
@@ -367,5 +375,10 @@ namespace kharoon
         char *arg_ptr = new char[arg.size()];
         argv.push_back(arg_ptr);
         return 0;
+    }
+
+    void context::set_path_to_server(std::string_view path_to_server)
+    {
+        this->server_path = path_to_server;
     }
 }

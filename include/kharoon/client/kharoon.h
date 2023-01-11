@@ -19,10 +19,12 @@
  * @brief kharoon_client_init starts the initialization of kharoon, you need to call this before calling any other
  * function. Between this and kharoon_client_init_end() function call no signals will be cought. Similarly, outside
  * of this interval, calls to any kharoon_* functions will be ignored.
+ * @param path_to_server absolute path to the kharoon server
  * @return 0 on success, any other number indicates error.
  * @see kharoon_client_init_end
+ * @pre it is assumed that path_to_server is a valid path and not null.
  */
-KHAROON_EXPORT int kharoon_client_init_start();
+KHAROON_EXPORT int kharoon_client_init_start(const char *path_to_server);
 /**
  * @brief kharoon_client_init completes the initialization of kharoon, you need to call this to enable handling crashes.
  * @return 0 on success, any other number indicates error.
@@ -92,5 +94,4 @@ KHAROON_EXPORT void kharoon_reset_dump_hardware_information();
  * disable them at some point, you will have to add them again for them to be passed to restarting process.
  */
 KHAROON_EXPORT int kharoon_add_command_line_argument(const char *arg);
-
 #endif

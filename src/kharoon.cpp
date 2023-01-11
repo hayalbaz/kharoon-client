@@ -4,10 +4,11 @@
 
 using namespace kharoon;
 
-int kharoon_client_init_start()
+int kharoon_client_init_start(const char *path_to_server)
 {
     init_in_progress = 1;
     context::get()->disable_crash_handler();
+    context::get()->set_path_to_server(path_to_server);
     return 0;
 }
 
