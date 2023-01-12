@@ -147,7 +147,7 @@ namespace kharoon
                 get()->dump_fd = pipe_fd[1];
             }
             else {
-                util::number_to_str_base_10(get()->argv[1], pipe_fd[1]);
+                util::number_to_str_base_10(get()->argv[1], pipe_fd[0]);
                 execv(get()->server_path.c_str(), get()->argv.data());
             }
 
