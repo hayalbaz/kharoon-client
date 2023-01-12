@@ -27,7 +27,7 @@ namespace kharoon
         void setup_crash_handler();
         void set_dump_system_environment(bool dump_system_environment);
         void set_dump_hardware_information(bool dump_hardware_information);
-        void set_restart_on_crash(bool restart_on_crash);
+        void set_restart_on_crash(bool restart_on_crash, std::string_view executable_path);
         int add_command_line_argument(std::string_view arg);
         void set_path_to_server(std::string_view path_to_server);
 
@@ -78,6 +78,7 @@ namespace kharoon
         bool dump_hardware_information;
         bool restart_on_crash;
         compatibility *compatibility_layer;
+        static constexpr std::size_t PIPE_FD_STR_SIZE = 10;
     };
 
 

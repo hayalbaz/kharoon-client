@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     kharoon_add_metadata_to_dump("key", metadata.c_str(), metadata.size());
     kharoon_set_dump_hardware_information();
     kharoon_set_dump_system_environment();
-    kharoon_set_restart_after_crash();
+    kharoon_set_restart_after_crash(argv[0]);
     kharoon_add_command_line_argument("--restarte-me");
     kharoon_client_init_end();
 

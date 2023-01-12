@@ -140,15 +140,14 @@ namespace kharoon
 
         int pipe_fd[2];
         auto res = pipe(pipe_fd);
+
         if (res != -1) {
             auto child_fd = fork();
             if (child_fd != 0) {
                 get()->dump_fd = pipe_fd[1];
-                close(pipe_fd[0]);
             }
             else {
-                close(pipe_fd[0]);
-                std::memcpy(get()->argv[0], &pipe_fd[1], sizeof(int));
+                util::number_to_str_base_10(get()->argv[1], pipe_fd[1]);
                 execv(get()->server_path.c_str(), get()->argv.data());
             }
 
@@ -346,7 +345,7 @@ namespace kharoon
         this->dump_hardware_information = dump_hardware_information;
     }
 
-    void context::set_restart_on_crash(bool restart_on_crash)
+    void context::set_restart_on_crash(bool restart_on_crash, std::string_view executable_path)
     {
         if (!init_in_progress) {
             return;
@@ -359,10 +358,17 @@ namespace kharoon
         }
         argv.clear();
 
+        char *arg_server_path = new char[server_path.length() + 1];
+        std::strcpy(arg_server_path, server_path.c_str());
+
+        argv.push_back(arg_server_path);
         if (!executable_path.empty()) {
-            char *arg_pipe_fd = new char[sizeof(int)];
-            char *arg_executable_path = new char[executable_path.size()];
+            char *arg_pipe_fd = new char[PIPE_FD_STR_SIZE]();
             argv.push_back(arg_pipe_fd);
+
+            this->executable_path = executable_path;
+            char *arg_executable_path = new char[executable_path.size() + 1];
+            std::strcpy(arg_executable_path, executable_path.data());
             argv.push_back(arg_executable_path);
         }
     }
@@ -372,7 +378,8 @@ namespace kharoon
         if (!restart_on_crash) {
             return -1;
         }
-        char *arg_ptr = new char[arg.size()];
+        char *arg_ptr = new char[arg.length() + 1];
+        std::strcpy(arg_ptr, arg.data());
         argv.push_back(arg_ptr);
         return 0;
     }

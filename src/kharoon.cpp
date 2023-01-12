@@ -29,14 +29,14 @@ int kharoon_add_metadata_to_dump(const char *key, const void *metadata, size_t s
     return context::get()->add_metadata(key, metadata, sz) ? 0 : 1;
 }
 
-void kharoon_set_restart_after_crash()
+void kharoon_set_restart_after_crash(const char *executable_path)
 {
-    context::get()->set_restart_on_crash(true);
+    context::get()->set_restart_on_crash(true, executable_path);
 }
 
 void kharoon_reset_restart_after_crash()
 {
-    context::get()->set_restart_on_crash(false);
+    context::get()->set_restart_on_crash(false, "");
 }
 
 void kharoon_set_dump_system_environment()

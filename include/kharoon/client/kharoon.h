@@ -59,7 +59,7 @@ KHAROON_EXPORT int kharoon_add_metadata_to_dump(const char *key, const void *met
  * @brief kharoon_set_restart_after_crash when a crash happens and kharoon creates a dump, it will restart the caller
  * program again.
  */
-KHAROON_EXPORT void kharoon_set_restart_after_crash();
+KHAROON_EXPORT void kharoon_set_restart_after_crash(const char *executable_path);
 /**
  * @brief kharoon_reset_restart_after_crash disables restarting after a crash, it is the default setting.
  */
