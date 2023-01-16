@@ -28,5 +28,4 @@ add_library(kharoonclient SHARED
 target_include_directories(kharoonclient PUBLIC include/)
 target_include_directories(kharoonclient PRIVATE ${LIBUNWIND_INCLUDE})
 target_link_libraries(kharoonclient ${LIBUNWIND_LIBS})
-target_compile_definitions(kharoonclient PRIVATE LIBCRASHCLIENT_LIBRARY)
 

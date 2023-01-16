@@ -69,7 +69,7 @@ void KHAROON_NOINLINE testc()
 {
     KHAROON_PREVENT_INLINE;
     std::cout << "c" << std::endl;
-    for (int i = 0; i < 5000; ++i) {
+    for (int i = 0; i < 2000; ++i) {
         std::this_thread::sleep_for(500us);
         std::cout << "stuff";
         std::this_thread::sleep_for(500us);
