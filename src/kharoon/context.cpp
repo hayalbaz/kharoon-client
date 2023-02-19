@@ -29,7 +29,11 @@ namespace kharoon
     context::context()
         : proc_name(std::string(PROC_NAME_LENGTH, '\0')),
           signals({SIGSEGV, SIGILL, SIGFPE, SIGABRT}),
-          dump_fd(0)
+          dump_fd(0),
+          dump_to_stdout(false),
+          dump_hardware_information(false),
+          dump_system_environment(false),
+          restart_on_crash(false)
     {
         compatibility_layer = get_compatibility_layer();
     }
@@ -46,6 +50,14 @@ namespace kharoon
             argv.push_back(NULL);
         }
         initialize_signal_handlers(&context::handler);
+    }
+
+    void context::set_dump_to_stdout(bool dump_to_stdout)
+    {
+        this->dump_to_stdout = dump_to_stdout;
+        if (dump_to_stdout) {
+            dump_fd = 1;
+        }
     }
 
     void context::initialize_signal_handlers(void (*handler)(int))
@@ -138,25 +150,35 @@ namespace kharoon
         }
         fatal_error_in_progress = 1;
 
-        int pipe_fd[2];
-        auto res = pipe(pipe_fd);
-
-        if (res != -1) {
-            auto child_fd = fork();
-            if (child_fd != 0) {
-                get()->dump_fd = pipe_fd[1];
-            }
-            else {
-                util::number_to_str_base_10(get()->argv[1], pipe_fd[0]);
-                execv(get()->server_path.c_str(), get()->argv.data());
-            }
-
+        if (get()->dump_to_stdout) {
             get()->dump_system_information();
             get()->dump_unwind();
             get()->dump_shared_libraries();
             get()->dump_objects();
             get()->dump_metadata();
             get()->dump_flags();
+        }
+        else {
+            int pipe_fd[2];
+            auto res = pipe(pipe_fd);
+
+            if (res != -1) {
+                auto child_fd = fork();
+                if (child_fd != 0) {
+                    get()->dump_fd = pipe_fd[1];
+                }
+                else {
+                    util::number_to_str_base_10(get()->argv[1], pipe_fd[0]);
+                    execv(get()->server_path.c_str(), get()->argv.data());
+                }
+
+                get()->dump_system_information();
+                get()->dump_unwind();
+                get()->dump_shared_libraries();
+                get()->dump_objects();
+                get()->dump_metadata();
+                get()->dump_flags();
+            }
         }
 
         signal(signum, SIG_DFL);

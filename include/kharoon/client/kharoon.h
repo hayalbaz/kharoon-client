@@ -19,12 +19,12 @@
  * @brief kharoon_client_init starts the initialization of kharoon, you need to call this before calling any other
  * function. Between this and kharoon_client_init_end() function call no signals will be cought. Similarly, outside
  * of this interval, calls to any kharoon_* functions will be ignored.
- * @param path_to_server absolute path to the kharoon server
+ * @param path_to_server absolute path to the kharoon server, if empty string given kharoon will dump to stdout
  * @return 0 on success, any other number indicates error.
  * @see kharoon_client_init_end
  * @pre it is assumed that path_to_server is a valid path and not null.
  */
-KHAROON_EXPORT int kharoon_client_init_start(const char *path_to_server);
+KHAROON_EXPORT int kharoon_client_init_start(const char *path_to_server = "");
 /**
  * @brief kharoon_client_init completes the initialization of kharoon, you need to call this to enable handling crashes.
  * @return 0 on success, any other number indicates error.

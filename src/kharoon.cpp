@@ -8,7 +8,13 @@ int kharoon_client_init_start(const char *path_to_server)
 {
     init_in_progress = 1;
     context::get()->disable_crash_handler();
-    context::get()->set_path_to_server(path_to_server);
+    std::string_view path_view(path_to_server);
+    if (path_view.empty()) {
+        context::get()->set_dump_to_stdout(true);
+    }
+    else {
+        context::get()->set_path_to_server(path_to_server);
+    }
     return 0;
 }
 
